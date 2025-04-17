@@ -34,7 +34,7 @@ Configuration is primarily handled through a `.env` file placed in the project r
 # --- Authentication ---
 # WARNING: Storing sensitive credentials directly in .env is not recommended for production.
 # Consider using a secure secret management system.
-AUTH_API_ENDPOINT="https://uat-api.purchaseplus.com"
+AUTH_API_ENDPOINT="https://uat.api.purchaseplus.com"
 AUTH_EMAIL="your-email@example.com"
 AUTH_PASSWORD="your-secure-password"
 

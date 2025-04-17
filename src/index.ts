@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import "dotenv/config"; // Ensure .env is loaded early
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -88,20 +90,19 @@ const handleGraphQLQuery = async (
   variables?: Record<string, unknown> | string,
   endpoint: string = DEFAULT_GRAPHQL_ENDPOINT,
   headers: Record<string, string> = {},
-  timeout = DEFAULT_TIMEOUT,
-  allowMutations = false,
+  timeout = DEFAULT_TIMEOUT
 ) => {
   try {
     // Validate query syntax
     parse(query);
 
-    // Check for mutations if they're not allowed
-    if (!allowMutations && isMutation(query)) {
+    // Check for mutations based on config setting
+    if (!config.allowMutations && isMutation(query)) {
       return {
         content: [
           {
             type: "text",
-            text: "Mutation operations are not allowed unless explicitly enabled with allowMutations=true",
+            text: "Mutation operations are disallowed by server configuration.",
           },
         ],
         isError: true,
@@ -132,7 +133,9 @@ const handleGraphQLQuery = async (
           content: [
             {
               type: "text",
-              text: `Failed to parse variables as JSON: ${(parseError as Error).message}`,
+              text: `Failed to parse variables as JSON: ${
+                (parseError as Error).message
+              }`,
             },
           ],
           isError: true,
@@ -183,7 +186,11 @@ const handleGraphQLQuery = async (
           ? [
               {
                 type: "text",
-                text: `Using default headers: ${JSON.stringify(DEFAULT_HEADERS, null, 2)}`,
+                text: `Using default headers: ${JSON.stringify(
+                  DEFAULT_HEADERS,
+                  null,
+                  2
+                )}`,
               },
             ]
           : []),
@@ -215,7 +222,7 @@ const handleGraphQLQuery = async (
 const handleGraphQLIntrospect = async (
   endpoint: string = DEFAULT_GRAPHQL_ENDPOINT,
   headers: Record<string, string> = {},
-  includeDeprecated = true,
+  includeDeprecated = true
 ) => {
   try {
     // Fetch schema
@@ -238,7 +245,11 @@ const handleGraphQLIntrospect = async (
           ? [
               {
                 type: "text",
-                text: `Using default headers: ${JSON.stringify(DEFAULT_HEADERS, null, 2)}`,
+                text: `Using default headers: ${JSON.stringify(
+                  DEFAULT_HEADERS,
+                  null,
+                  2
+                )}`,
               },
             ]
           : []),
@@ -272,7 +283,7 @@ const server = new Server(
     capabilities: {
       tools: {},
     },
-  },
+  }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -283,23 +294,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (request.params.name) {
       case "graphql_query": {
-        const { query, variables, endpoint, headers, timeout, allowMutations } =
-          request.params.arguments as {
-            query: string;
-            variables?: Record<string, unknown> | string;
-            endpoint?: string;
-            headers?: Record<string, string>;
-            timeout?: number;
-            allowMutations?: boolean;
-          };
+        const { query, variables, endpoint, headers, timeout } = request.params
+          .arguments as {
+          query: string;
+          variables?: Record<string, unknown> | string;
+          endpoint?: string;
+          headers?: Record<string, string>;
+          timeout?: number;
+        };
 
         return await handleGraphQLQuery(
           query,
           variables,
           endpoint,
           headers,
-          timeout,
-          allowMutations,
+          timeout
         );
       }
 
@@ -314,7 +323,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         return await handleGraphQLIntrospect(
           endpoint,
           headers,
-          includeDeprecated,
+          includeDeprecated
         );
       }
 
@@ -334,7 +343,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text",
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          text: `Error: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
         },
       ],
       isError: true,

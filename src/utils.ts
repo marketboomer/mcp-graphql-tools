@@ -9,6 +9,7 @@ import {
 } from "graphql";
 import type { IntrospectionQuery } from "graphql";
 import { config } from "./config.js";
+import { apiTokenManager } from "./auth.js";
 
 const DEFAULT_GRAPHQL_ENDPOINT = config.endpoint;
 const DEFAULT_TIMEOUT = config.timeout;
@@ -83,6 +84,8 @@ export const executeGraphQLQuery = async ({
     processedVariables = JSON.parse(variables);
   }
 
+  const authHeaders = await apiTokenManager.getToken();
+
   const response = await axios.post(
     endpoint,
     {
@@ -92,12 +95,12 @@ export const executeGraphQLQuery = async ({
     {
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
-        ...DEFAULT_HEADERS, // Apply default headers
-        ...headers, // Request-specific headers override defaults
+        ...DEFAULT_HEADERS,
+        ...headers,
+        ...authHeaders,
       },
       timeout,
-    },
+    }
   );
 
   return response;
@@ -114,6 +117,8 @@ export const fetchGraphQLSchema = async ({
   includeDeprecated?: boolean;
   timeout?: number;
 }) => {
+  const authHeaders = await apiTokenManager.getToken();
+
   const response = await axios.post(
     endpoint,
     {
@@ -125,17 +130,17 @@ export const fetchGraphQLSchema = async ({
     {
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
-        ...DEFAULT_HEADERS, // Apply default headers
-        ...headers, // Request-specific headers override defaults
+        ...DEFAULT_HEADERS,
+        ...headers,
+        ...authHeaders,
       },
       timeout,
-    },
+    }
   );
 
   if (response.data.errors) {
     throw new Error(
-      `GraphQL server returned errors: ${JSON.stringify(response.data.errors)}`,
+      `GraphQL server returned errors: ${JSON.stringify(response.data.errors)}`
     );
   }
 

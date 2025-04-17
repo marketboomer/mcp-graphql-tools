@@ -176,3 +176,4 @@ dist
 
 build/
 node_modules/
+.qodo
