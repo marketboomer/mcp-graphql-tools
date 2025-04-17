@@ -96,6 +96,20 @@ const handleGraphQLQuery = async (
     // Validate query syntax
     parse(query);
 
+    // Check for disallowed 'ID!' type usage in variable definitions
+    const idTypeUsageRegex = /\\$\\w+\\s*:\\s*ID!/g;
+    if (idTypeUsageRegex.test(query)) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: Query uses 'ID!' for variable type definition. Please use 'Int!' instead for this endpoint.",
+          },
+        ],
+        isError: true,
+      };
+    }
+
     // Check for mutations based on config setting
     if (!config.allowMutations && isMutation(query)) {
       return {
